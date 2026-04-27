@@ -1,0 +1,25 @@
+services:
+  dev:
+    image: raspberry-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    network_mode: host
+    env_file:
+      - ../../.dev.env
+      - ../../.env
+    volumes:
+      - ../../:/CybICS
+      - ~/.ssh:/home/docker/.ssh/
+      - ~/.gitconfig:/home/docker/.gitconfig
+      - /var/run/docker.sock:/var/run/docker-host.sock
+      - $DOCKER_ENV_DIR/.bash_history:/home/docker/.bash_history
+    user: ${HOST_UID:-1000}:${HOST_UID:-1000}
+    depends_on:
+      - registry
+
+  registry:
+    image: registry:2
+    ports:
+      - 5050:5000

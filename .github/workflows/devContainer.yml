@@ -1,0 +1,179 @@
+name: devContainer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  raspberry2204:
+    name: Run devcontainer test raspberry on Ubuntu 22.04
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af
+          df -h
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: "Create environment files"
+        run: .devcontainer/prepare-env.sh
+
+      - name: run tests software
+        uses: devcontainers/ci@v0.3
+        env:
+          BUILDX_CACHE_FROM: type=gha
+          BUILDX_CACHE_TO: type=gha,mode=max
+        with:
+          configFile: .devcontainer/raspberry/devcontainer.json
+          env: .devcontainer/raspberry/.env
+          runCmd: |
+            docker ps
+            software/build.sh
+
+  raspberry2404:
+    name: Run devcontainer test raspberry on Ubuntu 24.04
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af
+          df -h
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: "Create environment files"
+        run: .devcontainer/prepare-env.sh
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: run tests software
+        uses: devcontainers/ci@v0.3
+        env:
+          BUILDX_CACHE_FROM: type=gha
+          BUILDX_CACHE_TO: type=gha,mode=max
+        with:
+          configFile: .devcontainer/raspberry/devcontainer.json
+          env: .devcontainer/raspberry/.env
+          runCmd: |
+            docker ps
+            software/build.sh
+
+  stm32:
+    name: Run devcontainer test stm32
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af
+          df -h
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: "Create environment files"
+        run: .devcontainer/prepare-env.sh
+
+      - name: run tests stm32
+        run: docker compose -f .devcontainer/stm32/docker-compose.yml run --rm dev scripts/build.sh
+
+  virtual:
+    name: Run devcontainer test virtual
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker system prune -af
+          df -h
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          lfs: false
+          submodules: recursive
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: "Create environment files"
+        run: .devcontainer/prepare-env.sh
+
+      - name: run tests for virtual environment
+        uses: devcontainers/ci@v0.3
+        env:
+          BUILDX_CACHE_FROM: type=gha
+          BUILDX_CACHE_TO: type=gha,mode=max
+        with:
+          configFile: .devcontainer/virtual/devcontainer.json
+          env: .devcontainer/virtual/.env
+          runCmd: |
+            pwd

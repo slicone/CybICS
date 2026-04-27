@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.title or 'CybICS - CTF Training' }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #404040; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff6b00; }
+
+        /* ── Header ── */
+        header {
+            background-color: #2d2d2d;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ff6b00;
+        }
+
+        header h1 { font-size: 1.25rem; font-weight: bold; color: #ff6b00; }
+
+        .header-stats { display: flex; align-items: center; gap: 1.5rem; }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1.25rem; font-weight: bold; color: #ff6b00; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.6; }
+
+        .progress-bar-mini { width: 120px; height: 6px; background: #404040; border-radius: 3px; overflow: hidden; }
+        .progress-bar-mini .fill { height: 100%; background: #ff6b00; border-radius: 3px; transition: width 0.3s; }
+
+        .reset-btn {
+            background: none; border: 1px solid #606060; color: #999;
+            padding: 0.35rem 0.75rem; border-radius: 0.25rem; font-size: 0.75rem;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .reset-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+        /* ── Main Layout ── */
+        main { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+        /* ── Category Tiles Grid ── */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 900px) {
+            .categories-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Category Tile ── */
+        .category-tile {
+            background: #232323; border: 1px solid #333;
+            border-radius: 0.75rem; overflow: hidden; transition: border-color 0.2s;
+        }
+        .category-tile:hover { border-color: #555; }
+
+        .category-header {
+            padding: 0.85rem 1.25rem 0.65rem;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #333; background: #282828;
+        }
+
+        .category-title-group { display: flex; align-items: center; gap: 0.6rem; }
+
+        .step-badge {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: rgba(255, 107, 0, 0.15); color: #ff6b00;
+            font-size: 0.7rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .category-title { font-size: 1rem; font-weight: 700; color: #ff6b00; }
+
+        .category-progress {
+            font-size: 0.75rem; color: #888;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .category-progress-bar { width: 60px; height: 4px; background: #404040; border-radius: 2px; overflow: hidden; }
+        .category-progress-bar .fill { height: 100%; background: #22c55e; border-radius: 2px; }
+
+        .category-body { padding: 0.5rem; }
+
+        /* ── Challenge Row ── */
+        .challenge-row {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.6rem 0.75rem; border-radius: 0.5rem;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .challenge-row:hover { background: #333; }
+        .challenge-row.solved { background: rgba(34, 197, 94, 0.08); }
+        .challenge-row.solved:hover { background: rgba(34, 197, 94, 0.15); }
+
+        .challenge-status {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 0.75rem; font-weight: bold;
+        }
+        .challenge-status.unsolved { border: 2px solid #555; color: #555; }
+        .challenge-status.done { background: #22c55e; color: #fff; border: none; }
+
+        .challenge-info { flex: 1; min-width: 0; }
+        .challenge-name {
+            font-size: 0.875rem; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #e5e5e5;
+        }
+        .challenge-row.solved .challenge-name { color: #aaa; }
+        .challenge-desc {
+            font-size: 0.7rem; color: #777;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;
+        }
+
+        .challenge-meta { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+
+        .badge {
+            display: inline-block; padding: 0.15rem 0.5rem;
+            border-radius: 0.2rem; font-size: 0.65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.03em;
+        }
+
+        .badge-points { background: rgba(255,107,0,0.15); color: #ff6b00; border: 1px solid rgba(255,107,0,0.3); }
+        .badge-easy { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .badge-medium { background: rgba(245,158,11,0.15); color: #f59e0b; }
+        .badge-hard { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+        .badge-tag {
+            font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 0.15rem;
+            text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+        }
+        .tag-recon { background: rgba(139,92,246,0.15); color: #a78bfa; }
+        .tag-exploit { background: rgba(239,68,68,0.15); color: #f87171; }
+        .tag-analysis { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .tag-evasion { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .tag-defense { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .tag-hardware { background: rgba(236,72,153,0.15); color: #f472b6; }
+
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <h1>{{ config.title or 'CybICS CTF Training' }}</h1>
+        </div>
+        <div class="header-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ solved|length }}<span style="font-size: 0.7rem; color: #888; font-weight: normal;">/{{ challenges.values()|map(attribute='challenges')|map('length')|sum }}</span></div>
+                <div class="stat-label">Solved</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ total_points }}</div>
+                <div class="stat-label">Points</div>
+            </div>
+            <div class="stat-item">
+                <div class="progress-bar-mini">
+                    <div class="fill" style="width: {{ (solved|length / (challenges.values()|map(attribute='challenges')|map('length')|sum) * 100)|round(1) if challenges else 0 }}%"></div>
+                </div>
+                <div class="stat-label">{{ (solved|length / (challenges.values()|map(attribute='challenges')|map('length')|sum) * 100)|round(0)|int if challenges else 0 }}% complete</div>
+            </div>
+            <button class="reset-btn" onclick="resetProgress()">Reset</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="categories-grid" id="categories-grid">
+            {% set ns = namespace(step=1) %}
+            {% for category_id, category in challenges.items() %}
+            {% set cat_solved = category.challenges|selectattr('id', 'in', solved)|list|length %}
+            {% set cat_total = category.challenges|length %}
+            <div class="category-tile" data-category="{{ category_id }}" id="cat-{{ category_id }}">
+                <div class="category-header">
+                    <div class="category-title-group">
+                        <div class="step-badge">{{ ns.step }}</div>
+                        <div class="category-title">{{ category.name }}</div>
+                    </div>
+                    <div class="category-progress">
+                        <span>{{ cat_solved }}/{{ cat_total }}</span>
+                        <div class="category-progress-bar">
+                            <div class="fill" style="width: {{ (cat_solved / cat_total * 100)|round(0) if cat_total else 0 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="category-body">
+                    {% for challenge in category.challenges %}
+                    {% set is_solved = challenge.id in solved %}
+                    {% set difficulty = 'easy' if challenge.points <= 150 else ('medium' if challenge.points <= 250 else 'hard') %}
+                    <div class="challenge-row {% if is_solved %}solved{% endif %}"
+                         data-tag="{{ challenge.get('tag', '') }}"
+                         data-difficulty="{{ difficulty }}"
+                         data-solved="{{ 'true' if is_solved else 'false' }}"
+                         onclick="window.parent.postMessage({ type: 'navigate', url: '/ctf/challenge/{{ challenge.id }}' }, '*')">
+
+                        <div class="challenge-status {% if is_solved %}done{% else %}unsolved{% endif %}">
+                            {% if is_solved %}✓{% endif %}
+                        </div>
+
+                        <div class="challenge-info">
+                            <div class="challenge-name">{{ challenge.title }}</div>
+                            <div class="challenge-desc">{{ challenge.description }}</div>
+                        </div>
+
+                        <div class="challenge-meta">
+                            {% if challenge.get('tag') %}
+                            <span class="badge badge-tag tag-{{ challenge.tag }}">{{ challenge.tag }}</span>
+                            {% endif %}
+                            {% if difficulty == 'easy' %}
+                            <span class="badge badge-easy">Easy</span>
+                            {% elif difficulty == 'medium' %}
+                            <span class="badge badge-medium">Medium</span>
+                            {% else %}
+                            <span class="badge badge-hard">Hard</span>
+                            {% endif %}
+                            <span class="badge badge-points">{{ challenge.points }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% set ns.step = ns.step + 1 %}
+            {% endfor %}
+        </div>
+    </main>
+
+    <script>
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset all CTF progress? This action cannot be undone.')) {
+                fetch('/ctf/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+                .then(r => r.json())
+                .then(data => { if (data.success) location.reload(); else alert('Error: ' + data.message); })
+                .catch(() => alert('An error occurred while resetting progress.'));
+            }
+        }
+    </script>
+</body>
+</html>

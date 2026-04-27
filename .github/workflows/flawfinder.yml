@@ -1,0 +1,26 @@
+# This workflow will test with flawfinder
+
+name: flawFinder C
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  flawfinder:
+    name: Flawfinder
+    runs-on: ubuntu-latest
+    steps:
+    - name: flawfinder_scan
+      uses: david-a-wheeler/flawfinder@2.0.19
+      with:
+        arguments: '--sarif ./software'
+        output: 'flawfinder_results.sarif'
+    - name: Upload analysis results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{github.workspace}}/flawfinder_results.sarif
